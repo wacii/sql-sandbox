@@ -29,6 +29,10 @@
   var slice = Array.prototype.slice;
   function noop() {};
 
+  var commandTemplate = tag('li', { class: 'command' });
+  var errorTemplate = tag('li', { class: 'error' });
+  var promptTemplate = tag('li', { class: 'prompt' });
+
   // textarea containing sql commands run when db is initialized
   var setup = $('#setup')
   // list of previously run sql commands and their results/errors
@@ -37,6 +41,78 @@
   var input = $('#input');
   // clears log, input, and restores the db with setup code
   var reset = $('#reset');
+
+  var lessons = [];
+  lessons.push({
+    title: 'Intro',
+    steps: [
+      prompt('Welcome to the first sql lesson!.'),
+      prompt('You are going to learn how to interact with an existing db.'),
+      prompt('But first lets create a table.'),
+      pressEnter(),
+      prompt('First we create a table.'),
+      prompt('It will be named products and will have id and name columns.'),
+      command('CREATE TABLE products (id int, name char);'),
+      pressEnter(),
+      prompt('Now lets add some data to our products table'),
+      command('INSERT INTO products VALUES (1, "radio"), (2, "tv");'),
+      pressEnter(),
+      prompt('You might not understand the previous commands, but that is ok.'),
+      prompt('Well get to those commands later.'),
+      prompt('Lets start pulling data from our table!'),
+      pressEnter(),
+      prompt('Lets see how to pull all the ids from products'),
+      command('SELECT id FROM products;'),
+      pressEnter(),
+      prompt('Now you try and select all the names from products'),
+      lessonComplete()
+    ]
+  });
+
+  var currentLesson = lessons[0];
+  var stepPointer = 0;
+  var waitingForEnter = false;
+  var lessonComplete = false
+
+  var lessonActions = {
+    prompt: function(step) {
+      logPrompt(step.text);
+      stepPointer++;
+      processLesson();
+    },
+    command: function(step) {
+      executeLessonCommand(step.text);
+      stepPointer++;
+      processLesson();
+    },
+    pressEnter: function(step) {
+      logPrompt('Press enter to continue.');
+      waitingForEnter = true;
+    },
+    lessonComplete: function(step) {
+      if (!lessonComplete) logPrompt('Lesson complete!');
+      lessonComplete = true;
+    }
+  }
+
+  function processLesson() {
+    var step = currentLesson.steps[stepPointer];
+    waitingForEnter = false;
+    lessonActions[step.type](step);
+  }
+
+  // TODO: can this be improved...feels off
+  function enterPressed() {
+    if (waitingForEnter) {
+      stepPointer++;
+      processLesson();
+    }
+  }
+
+  function prompt(str) { return { type: 'prompt', text: str } }
+  function command(str) { return { type: 'command', text: str } }
+  function pressEnter() { return { type: 'pressEnter' } }
+  function lessonComplete() { return { type: 'lessonComplete' } }
 
   // remember user commands so they can be browsed with up and down arrow
   function CommandHistory(el) {
@@ -69,8 +145,10 @@
   var db;
   resetDb();
 
+  processLesson();
+
   input.on('keyup', function(event) {
-    if (event.which === ENTER) executeInput(input.val());
+    if (event.which === ENTER) executeUserCommand(input.val());
     else if (event.which === UP) commandHistory.back();
     else if (event.which === DOWN) commandHistory.forward();
   });
@@ -87,30 +165,50 @@
     if (db != null && db.close != null) db.close();
     db = new SQL.Database();
     executeCommand(noop, logError)(setup.val());
+    logError(executeCommand(setup.val()));
   }
 
-  // simple wrapper offering a different way to call db.exec
-  function executeCommand(onSuccess, onError) {
-    return function(str) {
-      try {
-        var results = db.exec(str)[0];
-        onSuccess(results);
-      } catch(error) {
-        onError(error);
-      }
+  function executeCommand(command) {
+    if (command.str === '') return command;
+    try {
+      var statement = db.prepare(command.str);
+      if (statement.step())
+        command.results = db.exec(command.str)[0];
+    } catch(error) {
+      command.error = error;
+    } finally {
+      return command;
     }
   }
 
-  function logError(error) {
-    log.append(errorTemplate(error));
+  function rememberCommand(command) {
+    commandHistory.push(command.str);
+    return command;
   }
 
-  function logResults(results) {
-    log.append(resultsTemplate(results));
+  function logError(command) {
+    if (command.error != null)
+      addToLog(errorTemplate(command.error));
+    return command;
   }
 
-  function logCommand(str) {
-    log.append(commandTemplate(str));
+  function logResults(command) {
+    if (command.results != null)
+      addToLog(resultsTemplate(command.results));
+    return command;
+  }
+
+  function logCommand(command) {
+    addToLog(commandTemplate(command.str));
+    return command;
+  }
+
+  function logPrompt(prompt) {
+    addToLog(promptTemplate(prompt));
+  }
+
+  function addToLog(html) {
+    log.append(html);
   }
 
   function clearInput() {
@@ -121,13 +219,17 @@
     log.empty();
   }
 
-  // run when user enters command
-  var executeCommandWithLogging = executeCommand(logResults, logError);
-  function executeInput(str) {
-    commandHistory.push(str);
-    logCommand(str);
-    if (str != '') executeCommandWithLogging(str);
+  function executeUserCommand(str) {
+    var command = { str: str };
+    logError(logResults(logCommand(rememberCommand(executeCommand(command)))));
+    // TODO: improve upon this...consider validations
+    enterPressed();
     clearInput();
+  }
+
+  function executeLessonCommand(str) {
+    var command = { str: str };
+    logError(logResults(logCommand(executeCommand(command))));
   }
 
   // helper method for templates
@@ -144,9 +246,6 @@
         content + '</' + tagName + '>';
     }
   }
-
-  commandTemplate = tag('li', { class: 'command' });
-  errorTemplate = tag('li', { class: 'error' });
 
   function resultsTemplate(results) {
     var headers = tag('tr')(results.columns.map(tag('th')).join(''));
