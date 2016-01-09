@@ -27,7 +27,6 @@
   var DOWN = 40;
   var push = Array.prototype.push;
   var slice = Array.prototype.slice;
-  function noop() {};
 
   var commandTemplate = tag('li', { class: 'command' });
   var errorTemplate = tag('li', { class: 'error' });
@@ -102,11 +101,16 @@
   }
 
   // TODO: can this be improved...feels off
-  function enterPressed() {
+  function enterPressed(command) {
     if (waitingForEnter) {
       stepPointer++;
       processLesson();
     }
+    return command;
+  }
+
+  function checkResults(command) {
+    return command;
   }
 
   function prompt(str) { return { type: 'prompt', text: str } }
@@ -145,7 +149,7 @@
   var db;
   resetDb();
 
-  processLesson();
+  // processLesson();
 
   input.on('keyup', function(event) {
     if (event.which === ENTER) executeUserCommand(input.val());
@@ -156,6 +160,7 @@
   reset.on('click', function(event) {
     clearInput();
     clearLog();
+    // FIXME: command history persists across reset...
     commandHistory.clear();
     resetDb();
   })
@@ -164,8 +169,12 @@
   function resetDb() {
     if (db != null && db.close != null) db.close();
     db = new SQL.Database();
-    executeCommand(noop, logError)(setup.val());
-    logError(executeCommand(setup.val()));
+    pipe(setup.val(), prepareCommand, executeCommand, logError);
+  }
+
+  function prepareCommand(str) {
+    if (str == null) str = '';
+    return { str: str };
   }
 
   function executeCommand(command) {
@@ -219,17 +228,23 @@
     log.empty();
   }
 
+  function pipe(value) {
+    var fns = slice.call(arguments, 1, arguments.length);
+    var fn;
+    while (fn = fns.shift())
+      value = fn(value);
+    return value;
+  }
+
   function executeUserCommand(str) {
-    var command = { str: str };
-    logError(logResults(logCommand(rememberCommand(executeCommand(command)))));
-    // TODO: improve upon this...consider validations
-    enterPressed();
+    pipe(str, prepareCommand,
+      executeCommand, rememberCommand, logCommand, logResults, logError,
+      enterPressed, checkResults);
     clearInput();
   }
 
   function executeLessonCommand(str) {
-    var command = { str: str };
-    logError(logResults(logCommand(executeCommand(command))));
+    pipe(str, prepareCommand, executeCommand, logCommand, logResults, logError);
   }
 
   // helper method for templates
