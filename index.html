@@ -1,0 +1,159 @@
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script src="https://cdn.rawgit.com/kripken/sql.js/master/js/sql.js"></script>
+  <style media="screen">
+    #setup, #log, #input {
+      width: 50vw;
+    }
+    #setup {
+      height: 100px;
+    }
+  </style>
+</head>
+<body>
+  <textarea id="setup">
+    CREATE TABLE test (a int, b char);
+    INSERT INTO test VALUES (1,"a"), (2,"b");
+  </textarea>
+  <ul id="log"></ul>
+  <input id="input" type="text" name="code">
+  <button id="reset">reset</button>
+</body>
+<script type="text/javascript">
+  // constants
+  var ENTER = 13;
+  var UP = 38;
+  var DOWN = 40;
+  var push = Array.prototype.push;
+  var slice = Array.prototype.slice;
+  function noop() {};
+
+  // textarea containing sql commands run when db is initialized
+  var setup = $('#setup')
+  // list of previously run sql commands and their results/errors
+  var log = $('#log');
+  // input user enters in sql commands to be run
+  var input = $('#input');
+  // clears log, input, and restores the db with setup code
+  var reset = $('#reset');
+
+  // remember user commands so they can be browsed with up and down arrow
+  function CommandHistory(el) {
+    this.input = el;
+    this.pointer = 0;
+  }
+
+  CommandHistory.prototype.push = function(value) {
+    push.call(this, value);
+    this.pointer = this.length - 1;
+  };
+
+  CommandHistory.prototype.back = function() {
+    if (this.pointer > 0) this.pointer--;
+    this.input.val(this[this.pointer]);
+  };
+
+  CommandHistory.prototype.forward = function() {
+    if (this.pointer < this.length) this.pointer++;
+    this.input.val(this[this.pointer]);
+  };
+
+  CommandHistory.prototype.clear = function() {
+    slice.call(this, 0, this.length);
+    this.pointer = 0;
+  }
+
+  var commandHistory = new CommandHistory(input);
+
+  var db;
+  resetDb();
+
+  input.on('keyup', function(event) {
+    if (event.which === ENTER) executeInput(input.val());
+    else if (event.which === UP) commandHistory.back();
+    else if (event.which === DOWN) commandHistory.forward();
+  });
+
+  reset.on('click', function(event) {
+    clearInput();
+    clearLog();
+    commandHistory.clear();
+    resetDb();
+  })
+
+  // TODO: consider making a db object
+  function resetDb() {
+    if (db != null && db.close != null) db.close();
+    db = new SQL.Database();
+    executeCommand(noop, logError)(setup.val());
+  }
+
+  // simple wrapper offering a different way to call db.exec
+  function executeCommand(onSuccess, onError) {
+    return function(str) {
+      try {
+        var results = db.exec(str)[0];
+        onSuccess(results);
+      } catch(error) {
+        onError(error);
+      }
+    }
+  }
+
+  function logError(error) {
+    log.append(errorTemplate(error));
+  }
+
+  function logResults(results) {
+    log.append(resultsTemplate(results));
+  }
+
+  function logCommand(str) {
+    log.append(commandTemplate(str));
+  }
+
+  function clearInput() {
+    input.val('');
+  }
+
+  function clearLog() {
+    log.empty();
+  }
+
+  // run when user enters command
+  var executeCommandWithLogging = executeCommand(logResults, logError);
+  function executeInput(str) {
+    commandHistory.push(str);
+    logCommand(str);
+    if (str != '') executeCommandWithLogging(str);
+    clearInput();
+  }
+
+  // helper method for templates
+  function tag(tagName, attributes) {
+    return function(content) {
+      var attrStr = ''
+      if (typeof attributes === 'object') {
+        var keys = Object.keys(attributes);
+        attrStr = keys.map(function(key) {
+          return key + '=' + attributes[key];
+        }).join(' ');
+      }
+      return '<' + tagName + ' ' + attrStr + '>' +
+        content + '</' + tagName + '>';
+    }
+  }
+
+  commandTemplate = tag('li', { class: 'command' });
+  errorTemplate = tag('li', { class: 'error' });
+
+  function resultsTemplate(results) {
+    var headers = tag('tr')(results.columns.map(tag('th')).join(''));
+    var rows = results.values.map(function(record) {
+      return tag('tr')(record.map(tag('td')).join(''));
+    });
+    return tag('li')(tag('table')(headers + rows.join('')));
+  }
+</script>
+</html>
