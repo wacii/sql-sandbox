@@ -27,6 +27,7 @@
   var DOWN = 40;
   var push = Array.prototype.push;
   var slice = Array.prototype.slice;
+  var splice = Array.prototype.splice;
 
   var commandTemplate = tag('li', { class: 'command' });
   var errorTemplate = tag('li', { class: 'error' });
@@ -140,7 +141,7 @@
   };
 
   CommandHistory.prototype.clear = function() {
-    slice.call(this, 0, this.length);
+    splice.call(this, 0, this.length);
     this.pointer = 0;
   }
 
@@ -160,7 +161,6 @@
   reset.on('click', function(event) {
     clearInput();
     clearLog();
-    // FIXME: command history persists across reset...
     commandHistory.clear();
     resetDb();
   })
