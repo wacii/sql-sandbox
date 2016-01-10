@@ -28,6 +28,7 @@
   var push = Array.prototype.push;
   var slice = Array.prototype.slice;
   var splice = Array.prototype.splice;
+  function noop() {}
 
   var commandTemplate = tag('li', { class: 'command' });
   var errorTemplate = tag('li', { class: 'error' });
@@ -41,6 +42,13 @@
   var input = $('#input');
   // clears log, input, and restores the db with setup code
   var reset = $('#reset');
+
+  function clearInput() {
+    input.val('');
+  }
+  function clearLog() {
+    log.empty();
+  }
 
   var lessons = [];
   lessons.push({
@@ -65,15 +73,25 @@
       command('SELECT id FROM products;'),
       pressEnter(),
       prompt('Now you try and select all the names from products'),
+      checkResults([{ type: 'columns', columns: ['name'] }]),
+      prompt('Dont select the product with id 1'),
+      checkResults([{ type: 'excludes', values: [[1, "radio"]] }]),
+      prompt('Select all columns of product with id 1'),
+      checkResults([{ type: 'includes', values: [[1, "radio"]] }]),
+      prompt('Select all products'),
+      checkResults([{ type: 'count', count: 2 }]),
       lessonComplete()
     ]
   });
 
   var currentLesson = lessons[0];
   var stepPointer = 0;
-  var waitingForEnter = false;
-  var lessonComplete = false
 
+  function currentStep() {
+    return currentLesson.steps[stepPointer]
+  }
+
+  // TODO: bundle `stepPointer++; processLesson();`
   var lessonActions = {
     prompt: function(step) {
       logPrompt(step.text);
@@ -87,37 +105,129 @@
     },
     pressEnter: function(step) {
       logPrompt('Press enter to continue.');
-      waitingForEnter = true;
     },
     lessonComplete: function(step) {
-      if (!lessonComplete) logPrompt('Lesson complete!');
-      lessonComplete = true;
-    }
+      logPrompt('Lesson complete!');
+    },
+    checkResults: noop,
+    checkForChanges: noop
   }
 
   function processLesson() {
-    var step = currentLesson.steps[stepPointer];
-    waitingForEnter = false;
+    var step = currentStep();
     lessonActions[step.type](step);
   }
 
-  // TODO: can this be improved...feels off
   function enterPressed(command) {
-    if (waitingForEnter) {
+    if (currentStep().type !== 'pressEnter') return command;
+
+    stepPointer++;
+    processLesson();
+    return command;
+  }
+
+  function resultsExpectation(command) {
+    var step = currentStep();
+    if (step.type !== 'checkResults') return command;
+
+    if (compareResults(command.results, step.expectations)) {
+      logPrompt('Success!');
       stepPointer++;
       processLesson();
     }
     return command;
   }
 
-  function checkResults(command) {
+  function forChangesExpectation(command) {
+    var step = currentStep();
+    if (step.type !== 'checkForChanges') return command;
+
+    results = pipe(step.commandStr, prepareCommand, executeCommand).results
+    if (compareResults(results, step.expectations)) {
+      logPrompt('Success!');
+      processLesson();
+    }
     return command;
+  }
+
+  checkExpectation = {
+    columns: function(results, expectation) {
+      if (results.columns.length !== expectation.columns.length) return false;
+      return arrayContains(results.columns, expectation.columns);
+    },
+    includes: function(results, expectation) {
+      var result = results.values;
+      var expected = expectation.values;
+
+      var len = expected.length;
+      for (var i = 0; i < len; i++)
+        if (!arrayDeepContains(result, expected[i])) return false;
+      return true;
+    },
+    excludes: function(results, expectation) {
+      var result = results.values;
+      var expected = expectation.values;
+
+      var len = expected.length;
+      for (var i = 0; i < len; i++)
+        if (!arrayDeepHasNone(result, expected[i])) return false;
+      return true;
+    },
+    count: function(results, expectation) {
+      return results != null && results.values.length === expectation.count;
+    }
+  }
+
+  function compareResults(results, expectations) {
+    var len = expectations.length;
+    for (var i = 0; i < len; i++) {
+      var expectation = expectations[i];
+      if(!checkExpectation[expectation.type](results, expectation))
+        return false;
+    }
+    return true;
+  }
+
+  function arrayDeepContains(arrays, arr) {
+    var len = arrays.length;
+    for (var i = 0; i < len; i++)
+      if (!arrayContains(arrays[i], arr)) return false;
+    return true;
+  }
+
+  function arrayDeepHasNone(arrays, arr) {
+    var len = arrays.length;
+    for (var i = 0; i < len; i++)
+      if (!arrayHasNone(arrays[i], arr)) return false;
+    return true;
+  }
+
+  function arrayContains(arr1, arr2) {
+    var len = arr2.length;
+    for (var i = 0; i < len; i++)
+      if (arr1.indexOf(arr2[i]) === -1) return false;
+    return true;
+  }
+
+  function arrayHasNone(arr1, arr2) {
+    var len = arr2.length;
+    for (var i = 0; i < len; i++)
+      if (arr1.indexOf(arr2[i]) !== -1) return false;
+    return true;
   }
 
   function prompt(str) { return { type: 'prompt', text: str } }
   function command(str) { return { type: 'command', text: str } }
   function pressEnter() { return { type: 'pressEnter' } }
   function lessonComplete() { return { type: 'lessonComplete' } }
+
+  function checkResults(arr) {
+    return { type: 'checkResults', expectations: arr };
+  }
+
+  function checkForChanges(str, arr) {
+    return { type: 'checkForChanges', expectations: arr, commandStr: str };
+  }
 
   // remember user commands so they can be browsed with up and down arrow
   function CommandHistory(el) {
@@ -145,12 +255,13 @@
     this.pointer = 0;
   }
 
+  // TODO: define as singleton when you move to browserify
   var commandHistory = new CommandHistory(input);
 
   var db;
   resetDb();
 
-  // processLesson();
+  processLesson();
 
   input.on('keyup', function(event) {
     if (event.which === ENTER) executeUserCommand(input.val());
@@ -191,6 +302,7 @@
   }
 
   function rememberCommand(command) {
+    // TODO: extract assumed stated
     commandHistory.push(command.str);
     return command;
   }
@@ -220,14 +332,6 @@
     log.append(html);
   }
 
-  function clearInput() {
-    input.val('');
-  }
-
-  function clearLog() {
-    log.empty();
-  }
-
   function pipe(value) {
     var fns = slice.call(arguments, 1, arguments.length);
     var fn;
@@ -239,7 +343,7 @@
   function executeUserCommand(str) {
     pipe(str, prepareCommand,
       executeCommand, rememberCommand, logCommand, logResults, logError,
-      enterPressed, checkResults);
+      enterPressed, resultsExpectation, forChangesExpectation);
     clearInput();
   }
 
