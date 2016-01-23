@@ -1,12 +1,17 @@
-// constants
-var ENTER = 13;
-var UP = 38;
-var DOWN = 40;
-var push = Array.prototype.push;
-var slice = Array.prototype.slice;
-var splice = Array.prototype.splice;
+'use strict';
 
-var CommandHistory = require('./command-history');
+// constants
+const ENTER = 13;
+const UP = 38;
+const DOWN = 40;
+const push = Array.prototype.push;
+const slice = Array.prototype.slice;
+const splice = Array.prototype.splice;
+
+const CommandHistory = require('./command-history');
+const Lesson = require('./lesson');
+const commandBuilder = require('./commands');
+const intro = require('../lessons/intro');
 
 window.sqlSandbox = { init: init };
 
@@ -14,13 +19,13 @@ function init() {
   // TODO: attach this to an element, and create the framework from a template
 
   // textarea containing sql commands run when db is initialized
-  var setup = $('#setup')
+  const setup = $('#setup')
   // list of previously run sql commands and their results/errors
-  var log = $('#log');
+  const log = $('#log');
   // input user enters in sql commands to be run
-  var input = $('#input');
+  const input = $('#input');
   // clears log, input, and restores the db with setup code
-  var reset = $('#reset');
+  const reset = $('#reset');
 
   function clearInput() {
     input.val('');
@@ -29,28 +34,23 @@ function init() {
     log.empty();
   }
 
-  var lesson = new (require('./lesson')(log))('Intro');
-  lesson.steps = require('../lessons/intro');
-  var currentStep = lesson.currentStep.bind(lesson);
-  var nextStep = lesson.nextStep.bind(lesson);
+  const lesson = new Lesson('Intro');
+  lesson.steps = intro;
+  const currentStep = lesson.currentStep.bind(lesson);
+  const nextStep = lesson.nextStep.bind(lesson);
 
-  var commandHistory = new CommandHistory(input);
-  var db = new SQL.Database();
+  const commandHistory = new CommandHistory(input);
+  const db = new SQL.Database();
 
   // TODO: pass lesson not bound lesson methods
-  var command = require('./commands')(
+  const command = commandBuilder(
     db, log, currentStep, nextStep, commandHistory, clearInput
   );
 
   command.executeSetupCommand(setup.val());
 
-  lesson.on('prompt', function(event) {
-    command.logPrompt(event);
-  });
-
-  lesson.on('execute', function(event) {
-    command.executeLessonCommand(event);
-  })
+  lesson.on('prompt', command.logPrompt);
+  lesson.on('execute', command.executeLessonCommand);
 
   lesson.doStep();
   input.on('keyup', function(event) {

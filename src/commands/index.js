@@ -1,23 +1,25 @@
-var pipe = require('./pipe');
-var prepareCommand = require('./prepare-command');
+'use strict';
+
+const pipe = require('./pipe');
+const prepareCommand = require('./prepare-command');
 
 module.exports = setup;
 
-function setup(db, log, currentStep, nextStep, commandHistory, clearInput) {
-  var executeCommand = require('./execute-command')(db);
+function setup(db, logEl, currentStep, nextStep, commandHistory, clearInput) {
+  const executeCommand = require('./execute-command')(db);
 
-  var log = require('./log')(log);
-  var logCommand = log.command;
-  var logError = log.error;
-  var logPrompt = log.prompt;
-  var logResults = log.results;
+  const log = require('./log')(logEl);
+  const logCommand = log.command;
+  const logError = log.error;
+  const logPrompt = log.prompt;
+  const logResults = log.results;
 
-  var rememberCommand = require('./remember-command')(commandHistory);
-  var enterPressed = require('./enter-pressed')(currentStep, nextStep);
-  var expectation = require('./expectation')(currentStep, nextStep, logPrompt);
-  var resultsExpectation = expectation.resultsExpectation;
-  var forChangesExpectation = expectation.forChangesExpectation;
-  
+  const rememberCommand = require('./remember-command')(commandHistory);
+  const enterPressed = require('./enter-pressed')(currentStep, nextStep);
+  const expectation = require('./expectation')(currentStep, nextStep, logPrompt);
+  const resultsExpectation = expectation.resultsExpectation;
+  const forChangesExpectation = expectation.forChangesExpectation;
+
   return {
     logPrompt: logPrompt,
 

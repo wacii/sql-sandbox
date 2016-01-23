@@ -1,9 +1,11 @@
-var templates = require('../templates');
+'use strict';
 
-var errorTemplate = templates.errorTemplate;
-var resultsTemplate = templates.resultsTemplate;
-var commandTemplate = templates.commandTemplate;
-var promptTemplate = templates.promptTemplate;
+const templates = require('../templates');
+
+const errorTemplate = templates.errorTemplate;
+const resultsTemplate = templates.resultsTemplate;
+const commandTemplate = templates.commandTemplate;
+const promptTemplate = templates.promptTemplate;
 
 module.exports = function(log) {
   return {

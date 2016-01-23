@@ -1,14 +1,15 @@
-var compareResults = require('../compare-results.js');
-var logPrompt = require('./log').prompt;
+'use strict';
 
-var pipe = require('./pipe');
-var prepareCommand = require('./prepare-command');
-var executeCommand = require('./execute-command');
+const compareResults = require('../compare-results.js');
+
+const pipe = require('./pipe');
+const prepareCommand = require('./prepare-command');
+const executeCommand = require('./execute-command');
 
 module.exports = function(currentStep, nextStep, logPrompt) {
   return {
     resultsExpectation: function resultsExpectation(command) {
-      var step = currentStep();
+      const step = currentStep();
       if (step.type !== 'checkResults') return command;
 
       if (compareResults(command.results, step.expectations)) {
@@ -19,7 +20,7 @@ module.exports = function(currentStep, nextStep, logPrompt) {
     },
 
     forChangesExpectation: function forChangesExpectation(command) {
-      var step = currentStep();
+      const step = currentStep();
       if (step.type !== 'checkForChanges') return command;
 
       var results =
