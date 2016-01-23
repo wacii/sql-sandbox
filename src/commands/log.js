@@ -7,17 +7,19 @@ const resultsTemplate = templates.resultsTemplate;
 const commandTemplate = templates.commandTemplate;
 const promptTemplate = templates.promptTemplate;
 
-module.exports = function(log) {
+module.exports = function buildLoggers(log) {
+  function addToLog(html) {
+    log.append(html);
+  }
+
   return {
     error: function logError(command) {
-      if (command.error != null)
-        addToLog(errorTemplate(command.error));
+      if (command.error !== undefined) addToLog(errorTemplate(command.error));
       return command;
     },
 
     results: function logResults(command) {
-      if (command.results != null)
-        addToLog(resultsTemplate(command.results));
+      if (command.results !== undefined) addToLog(resultsTemplate(command.results));
       return command;
     },
 
@@ -28,10 +30,6 @@ module.exports = function(log) {
 
     prompt: function logPrompt(prompt) {
       addToLog(promptTemplate(prompt));
-    }
+    },
   };
-
-  function addToLog(html) {
-    log.append(html);
-  }
 };

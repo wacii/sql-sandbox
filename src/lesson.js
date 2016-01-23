@@ -1,6 +1,6 @@
 'use strict';
 
-function noop() {};
+function noop() {}
 
 class Lesson {
   constructor(title) {
@@ -26,8 +26,7 @@ class Lesson {
 
   // TODO: extract and improve
   on(eventName, callback) {
-    if (this.callbacks[eventName] == null)
-      this.callbacks[eventName] = [];
+    if (this.callbacks[eventName] === undefined) this.callbacks[eventName] = [];
     this.callbacks[eventName].push(callback);
   }
 
@@ -38,22 +37,22 @@ class Lesson {
 }
 
 Lesson.prototype.lessonActions = {
-  prompt: function(step) {
+  prompt(step) {
     this.trigger('prompt', step.text);
     this.nextStep();
   },
-  command: function(step) {
+  command(step) {
     this.trigger('execute', step.text);
     this.nextStep();
   },
-  pressEnter: function(step) {
+  pressEnter() {
     this.trigger('prompt', 'Press enter to continue.');
   },
-  lessonComplete: function(step) {
-    this.trigger('prompt', 'Lesson complete!')
+  lessonComplete() {
+    this.trigger('prompt', 'Lesson complete!');
   },
   checkResults: noop,
-  checkForChanges: noop
-}
+  checkForChanges: noop,
+};
 
 module.exports = Lesson;

@@ -6,7 +6,7 @@ const pipe = require('./pipe');
 const prepareCommand = require('./prepare-command');
 const executeCommand = require('./execute-command');
 
-module.exports = function(currentStep, nextStep, logPrompt) {
+module.exports = function buildExpectations(currentStep, nextStep, logPrompt) {
   return {
     resultsExpectation: function resultsExpectation(command) {
       const step = currentStep();
@@ -23,13 +23,13 @@ module.exports = function(currentStep, nextStep, logPrompt) {
       const step = currentStep();
       if (step.type !== 'checkForChanges') return command;
 
-      var results =
+      const results =
         pipe(step.commandStr, prepareCommand, executeCommand).results;
       if (compareResults(results, step.expectations)) {
         logPrompt('Success!');
         nextStep();
       }
       return command;
-    }
+    },
   };
 };

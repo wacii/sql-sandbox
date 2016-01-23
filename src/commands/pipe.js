@@ -1,10 +1,5 @@
 'use strict';
 
-const slice = Array.prototype.slice;
-
-module.exports = function pipe(value, ...fns) {
-  let fn;
-  while (fn = fns.shift())
-    value = fn(value);
-  return value;
-}
+module.exports = function pipe(input, ...fns) {
+  return fns.reduce((fn, value) => fn(value), input);
+};

@@ -18,8 +18,15 @@
   "homepage": "https://github.com/wacii/sql-sandbox#readme",
   "devDependencies": {
     "babel-core": "^6.4.5",
+    "babel-eslint": "^5.0.0-beta6",
     "babel-loader": "^6.2.1",
     "babel-preset-es2015": "^6.3.13",
+    "eslint": "^1.10.3",
+    "eslint-config-airbnb": "^4.0.0",
+    "eslint-loader": "^1.2.0",
     "webpack": "^1.12.10"
+  },
+  "dependencies": {
+    "lodash.clonedeep": "^4.0.1"
   }
 }

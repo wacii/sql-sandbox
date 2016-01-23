@@ -4,22 +4,20 @@
 const ENTER = 13;
 const UP = 38;
 const DOWN = 40;
-const push = Array.prototype.push;
-const slice = Array.prototype.slice;
-const splice = Array.prototype.splice;
 
 const CommandHistory = require('./command-history');
 const Lesson = require('./lesson');
 const commandBuilder = require('./commands');
 const intro = require('../lessons/intro');
 
-window.sqlSandbox = { init: init };
+// TODO: import jQuery or remove dependency
+// TODO: import SQL
 
-function init() {
+const init = function init() {
   // TODO: attach this to an element, and create the framework from a template
 
   // textarea containing sql commands run when db is initialized
-  const setup = $('#setup')
+  const setup = $('#setup');
   // list of previously run sql commands and their results/errors
   const log = $('#log');
   // input user enters in sql commands to be run
@@ -40,7 +38,7 @@ function init() {
   const nextStep = lesson.nextStep.bind(lesson);
 
   const commandHistory = new CommandHistory(input);
-  const db = new SQL.Database();
+  let db = new SQL.Database();
 
   // TODO: pass lesson not bound lesson methods
   const command = commandBuilder(
@@ -53,17 +51,10 @@ function init() {
   lesson.on('execute', command.executeLessonCommand);
 
   lesson.doStep();
-  input.on('keyup', function(event) {
+  input.on('keyup', event => {
     if (event.which === ENTER) command.executeUserCommand(input.val());
     else if (event.which === UP) commandHistory.back();
     else if (event.which === DOWN) commandHistory.forward();
-  });
-
-  reset.on('click', function(event) {
-    clearInput();
-    clearLog();
-    commandHistory.clear();
-    resetDb();
   });
 
   // TODO: consider making a db object
@@ -73,4 +64,13 @@ function init() {
     db = new SQL.Database();
     command.executeSetupCommand(setup.val());
   }
-}
+
+  reset.on('click', () => {
+    clearInput();
+    clearLog();
+    commandHistory.clear();
+    resetDb();
+  });
+};
+
+window.sqlSandbox = { init };
