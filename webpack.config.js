@@ -1,19 +1,20 @@
 module.exports = {
   entry: './src/index.js',
   output: {
-    filename: 'bundle.js'
+    filename: 'bundle.js',
   },
   module: {
     loaders: [
       {
         loader: 'babel',
         exclude: 'node_modules',
-        query: { presets: ['es2015'] }
+        query: { presets: ['es2015'] },
       },
-      { test: /\.js$/, loader: "eslint-loader", exclude: /node_modules/ }
-    ]
+      { test: /\.js$/, loader: 'eslint-loader', exclude: /node_modules/ },
+      { test: /\.json$/, loader: 'json-loader' },
+    ],
   },
   eslint: {
-    configFile: './.eslintrc'
-  }
+    configFile: './.eslintrc',
+  },
 };

@@ -3,9 +3,9 @@
 function noop() {}
 
 class Lesson {
-  constructor(title) {
-    this.title = title;
-    this.steps = [];
+  constructor(obj) {
+    this.title = obj.title;
+    this.steps = obj.steps;
     this.stepPointer = 0;
     this.callbacks = {};
   }

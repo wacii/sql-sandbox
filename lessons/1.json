@@ -1,0 +1,54 @@
+{
+  "title": "Introduction",
+  "steps": [
+    { "type": "prompt", "text": "Welcome to this interactive SQL tutorial. In this lesson you will be learning to request records from an existing database. But first let us create that database just to get you used to the look of SQL queries." },
+    { "type": "pressEnter" },
+
+    { "type": "prompt", "text": "First we create a table named products with id and name columns." },
+    { "type": "command", "text": "CREATE TABLE products (id int, name char);" },
+    { "type": "pressEnter" },
+
+    { "type": "prompt", "text": "Now lets add some records to our products table." },
+    { "type": "command", "text": "INSERT INTO products (id, name)\nVALUES (1, \"radio\"), (2, \"tv\"), (3, \"tv\");" },
+    { "type": "pressEnter" },
+
+    { "type": "prompt", "text": "Don't worry if you didn't understand the previous commands. We'll get to those later. But for now, let's start pulling down data!" },
+    { "type": "prompt", "text": "You can pull down one columns worth of data..." },
+    { "type": "command", "text": "SELECT id FROM products;" },
+    { "type": "pressEnter" },
+
+    { "type": "prompt", "text": "Specify multiple columns specifically..." },
+    { "type": "command", "text": "SELECT id, name FROM products;" },
+    { "type": "pressEnter" },
+
+    { "type": "prompt", "text": "Or just grab all the columns..." },
+    { "type": "command", "text": "SELECT * FROM products;" },
+    { "type": "pressEnter" },
+
+    { "type": "prompt", "text": "You try. Fetch all names of products."},
+    { "type": "checkResults", "expectations": [
+      { "type": "columns", "columns": ["name"] },
+      { "type": "count", "count": 3 }
+    ] },
+
+    { "type": "prompt", "text": "Now fetch all the columns" },
+    { "type": "checkResults", "expectations": [
+      { "type": "columns", "columns": ["id", "name"] },
+      { "type": "count", "count": 3 }
+    ] },
+
+    { "type": "prompt", "text": "Set conditions on the query with the where clause." },
+    { "type": "command", "text": "SELECT * FROM products WHERE id >= 2;" },
+    { "type": "pressEnter" },
+
+    { "type": "prompt", "text": "Test if values are equal with '=', inequal with '<>' or null with 'IS NULL'. Conditions can be grouped with 'AND' and 'OR' and negated with 'NOT'." },
+    { "type": "prompt", "text": "Fetch all products with manufacturer_id of 1." },
+    { "type": "checkResults", "expectations": [
+      { "type": "values", "values": [[2, "tv"], [3, "tv"]] },
+      { "type": "count", "count": 2 }
+    ] },
+
+    { "type": "prompt", "text": "That's it for this lesson. Next we will learn how to limit the number of results a query returns as well as control its order." },
+    { "type": "lessonComplete" }
+  ]
+}

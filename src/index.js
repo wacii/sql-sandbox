@@ -8,7 +8,6 @@ const DOWN = 40;
 const CommandHistory = require('./command-history');
 const Lesson = require('./lesson');
 const commandBuilder = require('./commands');
-const intro = require('../lessons/intro');
 
 // TODO: import jQuery or remove dependency
 // TODO: import SQL
@@ -32,8 +31,7 @@ const init = function init() {
     log.empty();
   }
 
-  const lesson = new Lesson('Intro');
-  lesson.steps = intro;
+  const lesson = new Lesson(require('../lessons/1'));
   const currentStep = lesson.currentStep.bind(lesson);
   const nextStep = lesson.nextStep.bind(lesson);
 
