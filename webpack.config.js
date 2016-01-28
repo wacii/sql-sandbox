@@ -10,11 +10,7 @@ module.exports = {
         exclude: 'node_modules',
         query: { presets: ['es2015'] },
       },
-      { test: /\.js$/, loader: 'eslint-loader', exclude: /node_modules/ },
       { test: /\.json$/, loader: 'json-loader' },
     ],
-  },
-  eslint: {
-    configFile: './.eslintrc',
   },
 };
