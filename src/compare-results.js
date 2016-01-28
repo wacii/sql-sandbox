@@ -1,7 +1,5 @@
 'use strict';
 
-// TODO: handle when results empty, errors are being thrown
-
 function arrayContains(arr1, arr2) {
   return arr2.every(array => arr1.indexOf(array) !== -1);
 }
@@ -20,19 +18,21 @@ function arrayDeepHasNone(arrays, value) {
 
 const checkExpectation = {
   columns(results, expectation) {
+    if (results === undefined) return false;
     if (results.columns.length !== expectation.columns.length) return false;
     return arrayContains(results.columns, expectation.columns);
   },
   includes(results, expectation) {
+    if (results === undefined) return false;
     const result = results.values;
     return expectation.values.some(value => arrayDeepContains(result, value));
   },
   excludes(results, expectation) {
+    if (results === undefined) return false;
     const result = results.values;
     return expectation.values.every(value => arrayDeepHasNone(result, value));
   },
   count(results, expectation) {
-    // TODO: what do you expect results to be if not actual results
     return results !== undefined && results.values.length === expectation.count;
   },
 };
