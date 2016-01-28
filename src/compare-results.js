@@ -1,43 +1,36 @@
 'use strict';
 
-function arrayContains(arr1, arr2) {
-  return arr2.every(array => arr1.indexOf(array) !== -1);
+// array equality disregarding indices
+function areContentsEqual(arr1, arr2) {
+  return arr1.length === arr2.length &&
+    arr2.every(val => arr1.indexOf(val) !== -1);
 }
 
-function arrayHasNone(arr1, arr2) {
-  return arr2.every(array => arr1.indexOf(array) === -1);
-}
-
-function arrayDeepContains(arrays, value) {
-  return arrays.some(array => arrayContains(array, value));
-}
-
-function arrayDeepHasNone(arrays, value) {
-  return arrays.every(array => arrayHasNone(array, value));
+function expectedInArrays(arrays, expected) {
+  return arrays.some(array => areContentsEqual(array, expected));
 }
 
 const checkExpectation = {
   columns(results, expectation) {
-    if (results === undefined) return false;
-    if (results.columns.length !== expectation.columns.length) return false;
-    return arrayContains(results.columns, expectation.columns);
+    return areContentsEqual(results.columns, expectation.columns);
   },
   includes(results, expectation) {
-    if (results === undefined) return false;
-    const result = results.values;
-    return expectation.values.some(value => arrayDeepContains(result, value));
+    const actual = results.values;
+    const expected = expectation.values;
+    return expected.every(record => expectedInArrays(actual, record));
   },
   excludes(results, expectation) {
-    if (results === undefined) return false;
-    const result = results.values;
-    return expectation.values.every(value => arrayDeepHasNone(result, value));
+    const actual = results.values;
+    const expected = expectation.values;
+    return !expected.some(record => expectedInArrays(actual, record));
   },
   count(results, expectation) {
-    return results !== undefined && results.values.length === expectation.count;
+    return results.values.length === expectation.count;
   },
 };
 
 module.exports = function compareResults(results, expectations) {
+  if (results === undefined) return false;
   return expectations.every(expectation =>
     checkExpectation[expectation.type](results, expectation));
 };
