@@ -1,5 +1,5 @@
 'use strict';
 
 module.exports = function pipe(input, ...fns) {
-  return fns.reduce((fn, value) => fn(value), input);
+  return fns.reduce((value, fn) => fn(value), input);
 };

@@ -309,7 +309,7 @@
 	    fns[_key - 1] = arguments[_key];
 	  }
 
-	  return fns.reduce(function (fn, value) {
+	  return fns.reduce(function (value, fn) {
 	    return fn(value);
 	  }, input);
 	};
