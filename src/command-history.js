@@ -1,8 +1,5 @@
 'use strict';
 
-// TODO: the current pointer seems to lag behind
-//  it effectively starts you at the last item without displaying it
-
 const push = Array.prototype.push;
 const splice = Array.prototype.splice;
 
@@ -15,7 +12,7 @@ class CommandHistory {
 
   push(value) {
     push.call(this, value);
-    this.pointer = this.length - 1;
+    this.pointer = this.length;
   }
 
   back() {
