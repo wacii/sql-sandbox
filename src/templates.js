@@ -15,6 +15,10 @@ exports.commandTemplate = tag('li', { class: 'command' });
 exports.errorTemplate = tag('li', { class: 'error' });
 exports.promptTemplate = tag('li', { class: 'prompt' });
 
+exports.entryTemplate = function entryTemplate(html, classNames) {
+  return tag('li', { class: classNames.join(' ') })(html);
+};
+
 exports.resultsTemplate = function resultsTemplate(results) {
   const headers = tag('tr')(results.columns.map(tag('th')).join(''));
   const rows = results.values.map(record =>
