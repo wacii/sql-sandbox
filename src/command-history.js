@@ -9,6 +9,7 @@ const splice = Array.prototype.splice;
 //
 class CommandHistory extends EventEmitter {
   constructor() {
+    super();
     this.pointer = 0;
   }
 

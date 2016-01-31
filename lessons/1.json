@@ -42,9 +42,9 @@
     { "type": "pressEnter" },
 
     { "type": "prompt", "text": "Test if values are equal with '=', inequal with '<>' or null with 'IS NULL'. Conditions can be grouped with 'AND' and 'OR' and negated with 'NOT'." },
-    { "type": "prompt", "text": "Fetch all products with manufacturer_id of 1." },
+    { "type": "prompt", "text": "Fetch all products with id not equal to 1." },
     { "type": "checkResults", "expectations": [
-      { "type": "values", "values": [[2, "tv"], [3, "tv"]] },
+      { "type": "includes", "values": [[2, "tv"], [3, "tv"]] },
       { "type": "count", "count": 2 }
     ] },
 

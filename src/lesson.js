@@ -18,7 +18,7 @@ class Lesson {
     this.stepPointer = 0;
 
     this.terminal.on('results', results => this._checkResults(results));
-    this.terminal.on('evaluate', () => this._checkSideffects());
+    this.terminal.on('evaluate', () => this._checkSideEffects());
     this.terminal.on('continue', () => this._enterPressed());
   }
 
@@ -37,18 +37,25 @@ class Lesson {
   }
 
   _checkResults(results) {
-    if (compareResults(results, this.currentStep.expectations)) {
+    const step = this.currentStep;
+    if (['checkResults', 'checkForChanges'].indexOf(step.type) === -1) return;
+
+    if (compareResults(results, step.expectations)) {
       this.terminal.prompt('Success!', ['lesson']);
       this.nextStep();
     }
   }
 
-  _checkSideeffects() {
+  _checkSideEffects() {
+    const step = this.currentStep;
+    if (step.type !== 'checkForChanges') return;
+
     // TODO: don't use the database in this class
-    this._checkResults(this.db.evaluate(this.currentStep.commandStr));
+    this._checkResults(this.db.evaluate(step.commandStr));
   }
 
   _enterPressed() {
+    if (this.currentStep.type !== 'pressEnter') return;
     this.nextStep();
   }
 }

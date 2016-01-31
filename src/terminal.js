@@ -6,23 +6,25 @@ function render(el, html) {
 }
 
 module.exports = class Terminal extends EventEmitter {
-  constructor(el, evaluate) {
+  // TODO: what to call evaluator...this implementation feels slightly off
+  constructor(el, evaluator) {
+    super();
     this.el = el;
-    this.evaluate = evaluate;
+    this.evaluator = evaluator;
   }
 
   prompt(message, classNames = []) {
     render(this.el, template(message, classNames));
   }
 
-  execute(command, classNames = [], hideError = false, hideResults = true) {
+  execute(command, classNames = [], hideError = false, hideResults = false) {
     if (command.trim() === '') return this.emit('continue');
 
     render(this.el,
       template(command, classNames.concat(this.evaluator.classNames))
     );
     this.emit('evaluate', command);
-    this.evaluate(command,
+    this.evaluator.evaluate(command,
       // when results
       (results, html) => {
         // maybe show results

@@ -1,4 +1,4 @@
-const SQL = SQL; // FIXME
+const SQL = window.SQL; // FIXME
 const resultsTemplate = require('./templates').resultsTemplate;
 function noop() {} // TODO: extract somewhere
 
@@ -10,6 +10,11 @@ function noop() {} // TODO: extract somewhere
 module.exports = class Database {
   constructor() {
     this.db = new SQL.Database();
+  }
+
+  // TODO: this is all kinds of messy
+  get classNames() {
+    return ['sql'];
   }
 
   // Evaluate a command, with callbacks to handle results and errors.
@@ -30,7 +35,7 @@ module.exports = class Database {
     } catch (error) {
       onError(error, error);
     } finally {
-      statement.free();
+      if (statement !== undefined) statement.free();
     }
   }
 
