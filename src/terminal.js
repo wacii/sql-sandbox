@@ -16,6 +16,8 @@ module.exports = class Terminal extends EventEmitter {
   }
 
   execute(command, classNames = [], hideError = false, hideResults = true) {
+    if (command.trim() === '') return this.emit('continue');
+
     render(this.el,
       template(command, classNames.concat(this.evaluator.classNames))
     );

@@ -25,12 +25,12 @@ module.exports = class Database {
       if (statement.step()) {
         const results = this.db.exec(command)[0];
         onResults(results, resultsTemplate(results));
+        return results;
       }
     } catch (error) {
       onError(error, error);
     } finally {
       statement.free();
-      return command;
     }
   }
 
