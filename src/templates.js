@@ -14,6 +14,7 @@ function tag(tagName, attributes) {
 exports.commandTemplate = tag('li', { class: 'command' });
 exports.errorTemplate = tag('li', { class: 'error' });
 exports.promptTemplate = tag('li', { class: 'prompt' });
+exports.questionTemplate = tag('li', { class: 'question' });
 
 exports.entryTemplate = function entryTemplate(html, classNames) {
   return tag('li', { class: classNames.join(' ') })(html);

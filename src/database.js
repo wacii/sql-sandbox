@@ -1,39 +1,35 @@
 const SQL = window.SQL; // FIXME
-const resultsTemplate = require('./templates').resultsTemplate;
-function noop() {} // TODO: extract somewhere
-
-// NOTE: consider using error template for error message and just
-//   adding the connection class to the container <li> in terminal
+const EventEmitter = require('events');
+function noop() {} // TODO: extract
 
 // Encapsulate creation and normal use of a database.
 //
-module.exports = class Database {
+module.exports = class Database extends EventEmitter {
   constructor() {
+    super();
     this.db = new SQL.Database();
   }
 
-  // TODO: this is all kinds of messy
-  get classNames() {
-    return ['sql'];
-  }
-
-  // Evaluate a command, with callbacks to handle results and errors.
+  // Evaluate a command. Returns results if there are any. Emits 'results' and
+  // 'error' events with the expected data. Also accepts callbacks.
   //
-  // onResults(results, html)
-  // onError(error, html)
-  //
-  // db.evaluate('SELECT * FROM products', logResults, logError);
+  // db.evaluate('SELECT * FROM products');
   evaluate(command, onResults = noop, onError = noop) {
+    if (command === '') return this.emit('continue');
+    this.emit('evaluate', command);
+
     let statement;
     try {
       statement = this.db.prepare(command);
       if (statement.step()) {
         const results = this.db.exec(command)[0];
-        onResults(results, resultsTemplate(results));
+        onResults(results);
+        this.emit('results', results);
         return results;
       }
     } catch (error) {
-      onError(error, error);
+      onError(error);
+      this.emit('error', error);
     } finally {
       if (statement !== undefined) statement.free();
     }

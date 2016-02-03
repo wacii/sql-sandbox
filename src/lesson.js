@@ -17,9 +17,9 @@ class Lesson {
     this.db = db;
     this.stepPointer = 0;
 
-    this.terminal.on('results', results => this._checkResults(results));
-    this.terminal.on('evaluate', () => this._checkSideEffects());
-    this.terminal.on('continue', () => this._enterPressed());
+    this.db.on('results', results => this._checkResults(results));
+    this.db.on('evaluate', () => this._checkSideEffects());
+    this.db.on('continue', () => this._enterPressed());
   }
 
   get currentStep() {
