@@ -51,10 +51,10 @@
 	var UP = 38;
 	var DOWN = 40;
 
-	var Lesson = __webpack_require__(1);
-	var Terminal = __webpack_require__(3);
-	var User = __webpack_require__(5);
-	var Database = __webpack_require__(8);
+	var LessonLoader = __webpack_require__(1);
+	var Terminal = __webpack_require__(4);
+	var User = __webpack_require__(6);
+	var Database = __webpack_require__(9);
 
 	var $ = window.$; // FIXME
 
@@ -77,7 +77,8 @@
 
 	  var db = new Database();
 	  var terminal = new Terminal(log, db);
-	  var lesson = new Lesson(__webpack_require__(9), terminal, db);
+	  var lessonLoader = new LessonLoader(db, terminal);
+	  var lesson = lessonLoader.load(__webpack_require__(10));
 	  var user = new User(terminal);
 
 	  lesson.doStep();
@@ -111,19 +112,54 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var compareResults = __webpack_require__(2);
+	var Lesson = __webpack_require__(2);
+
+	module.exports = function () {
+	  function LessonLoader(terminal, db) {
+	    _classCallCheck(this, LessonLoader);
+
+	    this.db = db;
+	    this.terminal = terminal;
+	  }
+
+	  _createClass(LessonLoader, [{
+	    key: 'load',
+	    value: function load(data) {
+	      if (this.currentLesson) this.currentLesson.close();
+	      this.currentLesson = new Lesson(data, this.db, this.terminal);
+	      this.currentLesson.start();
+	      return this.currentLesson;
+	    }
+	  }]);
+
+	  return LessonLoader;
+	}();
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var compareResults = __webpack_require__(3);
 	function noop() {} // TODO: extract
 
-	// TODO: consider breaking this into separate pieces
-	//   there is a lot going on here
+	// TODO: consider breaking this into separate pieces there is a lot going on
+	// TODO: rather than providing cleanup methods, perhaps just reuse the object...
 
 	// Represents a particular lesson and its connection to the terminal. Listens to
 	// terminal to know when to check results or for changes. Otherwise after
-	// starting it with `doStep()` it basically does its own thing.
+	// starting it with `start()` it basically does its own thing.
+	//
+	// Make sure to cleanup with `close()` when you're done.
 	//
 
 	var Lesson = function () {
-	  function Lesson(data, terminal, db) {
+	  function Lesson(data, db, terminal) {
 	    var _this = this;
 
 	    _classCallCheck(this, Lesson);
@@ -135,18 +171,37 @@
 	    this.db = db;
 	    this.stepPointer = 0;
 
-	    this.db.on('results', function (results) {
+	    this.checkResults = function (results) {
 	      return _this._checkResults(results);
-	    });
-	    this.db.on('evaluate', function () {
+	    };
+	    this.checkSideEffects = function () {
 	      return _this._checkSideEffects();
-	    });
-	    this.db.on('continue', function () {
+	    };
+	    this.enterPressed = function () {
 	      return _this._enterPressed();
-	    });
+	    };
+
+	    this.db.on('results', this.checkResults);
+	    this.db.on('evaluate', this.checkSideEffects);
+	    this.db.on('continue', this.enterPressed);
 	  }
 
 	  _createClass(Lesson, [{
+	    key: 'start',
+	    value: function start() {
+	      this.doStep();
+	    }
+	  }, {
+	    key: 'close',
+	    value: function close() {
+	      this.db.off('results', this._checkResults);
+	      this.db.off('evaluate', this._checkSideEffects);
+	      this.db.off('continue', this._enterPressed);
+	    }
+	  }, {
+	    key: 'reset',
+	    value: function reset() {/* TODO */}
+	  }, {
 	    key: 'doStep',
 	    value: function doStep() {
 	      var step = this.currentStep;
@@ -220,7 +275,7 @@
 	module.exports = Lesson;
 
 /***/ },
-/* 2 */
+/* 3 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -270,7 +325,7 @@
 	};
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -279,7 +334,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var templates = __webpack_require__(4);
+	var templates = __webpack_require__(5);
 	var entryTemplate = templates.entryTemplate;
 	var errorTemplate = templates.errorTemplate;
 	var resultsTemplate = templates.resultsTemplate;
@@ -336,7 +391,7 @@
 	}();
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -374,7 +429,7 @@
 	};
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -384,7 +439,7 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	// TODO: how to handle enter pressed?
-	var CommandHistory = __webpack_require__(6);
+	var CommandHistory = __webpack_require__(7);
 
 	// Represents a user's connection to the terminal.
 	//
@@ -408,7 +463,7 @@
 	}();
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -421,7 +476,7 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var EventEmitter = __webpack_require__(7);
+	var EventEmitter = __webpack_require__(8);
 	var _push = Array.prototype.push;
 	var splice = Array.prototype.splice;
 
@@ -481,7 +536,7 @@
 	module.exports = CommandHistory;
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -755,7 +810,7 @@
 	}
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -769,7 +824,7 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var SQL = window.SQL; // FIXME
-	var EventEmitter = __webpack_require__(7);
+	var EventEmitter = __webpack_require__(8);
 	function noop() {} // TODO: extract
 
 	// Encapsulate creation and normal use of a database.
@@ -828,7 +883,7 @@
 	}(EventEmitter);
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports) {
 
 	"use strict";

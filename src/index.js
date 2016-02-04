@@ -3,7 +3,7 @@ const ENTER = 13;
 const UP = 38;
 const DOWN = 40;
 
-const Lesson = require('./lesson');
+const LessonLoader = require('./lesson-loader');
 const Terminal = require('./terminal');
 const User = require('./user');
 const Database = require('./database');
@@ -29,10 +29,9 @@ const init = function init() {
 
   const db = new Database();
   const terminal = new Terminal(log, db);
-  const lesson = new Lesson(require('../lessons/1'), terminal, db);
+  const lessonLoader = new LessonLoader(db, terminal);
+  lessonLoader.load(require('../lessons/1'));
   const user = new User(terminal);
-
-  lesson.doStep();
 
   // TODO: consider interface to user and its relation to the input
   //   perhaps the object should have more responsibility
